@@ -1,0 +1,602 @@
+/* General Styles */
+body {
+  background-color: #f4f4f4;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  height: 100%;
+}
+
+/* Page Content */
+.body-content {
+  margin-top: 80px; /* Prevent overlap with fixed navbar */
+  padding: 20px;
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  flex: 1;
+}
+
+/* Navbar */
+.navbar-container {
+  width: 100%;
+  height: 60px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  margin-left: 10px;
+}
+
+.navbar-container .logo img {
+  height: 40px;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-left: auto;
+  margin-right: 10px;
+  flex-wrap: wrap;
+}
+
+.nav-items ul {
+  display: flex;
+  list-style: none;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.nav-items ul li {
+  position: relative;
+  padding: 10px;
+}
+
+/* Navbar Links */
+.nav-items ul li a {
+  color: black;
+  text-decoration: none;
+  font-size: 16px;
+  transition: color 0.3s ease;
+}
+
+.nav-items ul li a:hover {
+  color: rgb(202, 99, 99);
+}
+
+/* General Dropdown Styling */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  width: 180px;
+  border-radius: 5px;
+  padding: 0;
+  list-style: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+}
+
+.dropdown:hover .dropdown-menu,
+.profile-dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+/* Ensure dropdown appears below parent */
+.dropdown-menu li {
+  padding: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dropdown-menu li:hover {
+  background: #f0f0f0;
+}
+
+.forgot-signup {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.forgot-link {
+  text-align: left;
+}
+
+.signup-link {
+  text-align: right;
+}
+
+/* Settings Dropdown (Nested Dropdown on Left) */
+.settings-dropdown {
+  position: relative;
+}
+
+.dropdown-submenu {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 100%; /* Aligns submenu to the left */
+  background-color: white;
+  width: 170px;
+  border-radius: 5px;
+  padding: 0;
+  list-style: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+}
+
+.settings-dropdown:hover .dropdown-submenu {
+  display: block;
+}
+
+.dropdown-submenu li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown-submenu li:hover {
+  background: #f0f0f0;
+}
+
+/* Ensure the Settings submenu is properly positioned */
+.settings-dropdown > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.settings-dropdown:hover > .dropdown-submenu {
+  top: 0;
+  right: 100%;
+}
+
+/* Button */
+button {
+  padding: 8px;
+  margin-top: 17px;
+  background-color: #6198d4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Global Styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Center the forms */
+.page-container {
+  position: absolute; /* Keeps it fixed at the top */
+  top: 80px; /* Adjust according to navbar height */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%; /* Ensures it spans the width */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Keeps content at the top */
+  padding-top: 20px; /* Adjust for spacing */
+}
+
+/* Form Container */
+.form-container {
+  width: 100%;
+  max-width: 350px;
+  padding: 15px;
+}
+
+/* Form Styling */
+form {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  text-align: center;
+}
+
+/* Form Fields */
+form div {
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+form input,
+form textarea,
+form select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  display: block;
+}
+
+form input:focus,
+form textarea:focus,
+form select:focus {
+  outline: none;
+  border-color: #ffcc00;
+}
+
+/* Textarea */
+form textarea {
+  height: 80px;
+  resize: none;
+}
+
+/* Heading */
+h1 {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: #007bff;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Fix */
+@media (max-width: 768px) {
+  .form-container {
+    max-width: 320px;
+  }
+
+  form {
+    padding: 20px;
+  }
+
+  form input,
+  form textarea {
+    padding: 7px;
+  }
+
+  button {
+    padding: 8px;
+    font-size: 14px;
+  }
+}
+
+/* Scalping Component */
+.scalping-container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.heading {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+textarea {
+  width: 100%;
+  height: 200px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.buttons {
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100px;
+  margin: 10px;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.textarea-container {
+  margin-top: 30px;
+}
+
+.textarea-output {
+  width: 100%;
+  height: 200px;
+  resize: none;
+  font-family: monospace;
+}
+
+select[disabled] {
+  background-color: #f0f0f0;
+}
+
+/* Profile Dropdown */
+.profile-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+}
+
+.profile-name:hover {
+  cursor: pointer;
+  color: gray;
+}
+
+.profile-icon {
+  font-size: 20px;
+}
+
+/* Table Styling */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  position: relative;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+}
+
+tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* Hide buttons initially */
+.edit-btn, .delete-btn {
+  display: none;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+/* Show buttons only when hovering over the row */
+tr:hover .edit-btn,
+tr:hover .delete-btn {
+  display: inline-block;
+}
+
+/* Edit and Delete Buttons */
+.edit-btn { background-color: #28a745; color: white; }
+.edit-btn:hover { background-color: #218838; }
+
+.delete-btn { background-color: #dc3545; color: white; }
+.delete-btn:hover { background-color: #c82333; }
+
+.circuit-container {
+  max-width: 700px;
+  margin: 4rem auto;
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.radio-group {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1f2937;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb; /* blue-600 */
+}
+
+.start-button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  margin-top: 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.start-button:hover {
+  background-color: #1d4ed8; /* blue-700 */
+}
+
+.start-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loader {
+  animation: spin 1s linear infinite;
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logs-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.logs-box {
+  background-color: #111827;
+  color: #86efac;
+  font-family: monospace;
+  font-size: 0.875rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  height: 16rem;
+  overflow-y: auto;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+.no-logs {
+  color: #9ca3af;
+}
+
+/* Footer */
+.footer {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  padding: 20px 0;
+  margin-top: auto;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-text {
+  font-size: 14px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-links a {
+  color: #d1d5db;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease-in-out;
+}
+
+.footer-links a:hover {
+  color: #ffffff;
+}
+
+/* Root container to ensure footer stays at the bottom */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+html {
+  height: 100%;
+}

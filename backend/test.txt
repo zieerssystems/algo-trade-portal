@@ -1,0 +1,1150 @@
+# ##############################################################################################
+# #
+# #   Algo Name : Scalping - Benificial in Range movement
+# #   Logic   :entering and exiting trades rapidly based on small moves 
+# #           while managing risk through tight stop-loss orders and efficient position sizing.
+# #
+# ###############################################################################################
+# import sys,time,keyboard,logging, pyotp
+# from datetime import datetime,  timedelta
+# from NorenRestApiPy.NorenApi import NorenApi
+
+# # Disable debug messages for NorenRestApiPy.NorenApi
+# logging.getLogger('NorenRestApiPy.NorenApi').setLevel(logging.INFO)
+# logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
+
+# class ShoonyaApiPy(NorenApi):
+#     def __init__(self):
+#         NorenApi.__init__(self, host='https://api.shoonya.com/NorenWClientTP/', websocket='wss://api.shoonya.com/NorenWSTP/')
+#         self.get = None
+#         global api
+#         api = self
+#         print(self)
+
+#     def get_ltp_data(self, param, param1, param2):
+#         pass
+
+# logging.basicConfig(level=logging.DEBUG)
+# api = ShoonyaApiPy()
+
+# #__User login input__
+# token = '7O66IG4Y23562OZ3ZC3B2Z66S5T37265'
+# otp = pyotp.TOTP(token).now()
+# user = 'FA71897'
+# pwd = 'Zieers@2025' #'Zieers@2024'
+# factor2 = otp
+# vc = 'FA71897_U'
+# app_key = '036e0ee3e72de505cd7fe9cbcf16c7e8'
+# imei = 'abc1234'
+
+# ####################################      __User Algo input__   ############################
+# exch            = 'NSE'
+# StocksName      = "IRFC-EQ"
+# price_type      = "MKT"     # "MKT" or "LMT"
+# initialBuyPrice = 215    # this required if buyOnMarket = False
+# targetPriceDiff = 0.25      # in Rs , to sell
+# EntryDiffPrice  = 0.25      # in Rs , to buy
+# lotSize         = 1         # min qty to buy
+# MaxOpenPosition = 3         # Max Qty
+# duration        = 180       # in min
+# StopLossInRs    = EntryDiffPrice * ( MaxOpenPosition + 1)    # in rs , to book stop loss
+# marketClosingTime = "15:30" #HH:MM
+# debugOn = True
+# ############################################################################################
+
+# buyFlag = True
+# current_time = datetime.now()
+# closing_time = datetime.strptime(marketClosingTime, "%H:%M")
+# closing_time_date = current_time.date()
+# # Subtract 1 minute from closing_time
+# # Create a new datetime object with the date part from current_time and time part from closing_time
+# closing_time_combined = datetime.combine(closing_time_date, closing_time.time())
+# # Subtract 1 minute from closing_time_combined
+# closing_time_minus_1_min = closing_time_combined - timedelta(minutes=1)
+# closing_time_minus_30_min = datetime.combine(closing_time_date, closing_time.time()) - timedelta(minutes=30)
+
+
+# loginStatus = api.login(userid=user, password=pwd, twoFA=factor2, vendor_code=vc, api_secret=app_key, imei=imei)
+# if debugOn : print(f'loginStatus={loginStatus}')
+# if loginStatus is None: 
+#     print("Unable to login. login result=",loginStatus)
+#     sys.exit()
+# if price_type == "MKT" :
+#     quotes = api.get_quotes(exch, StocksName)
+#     nextBuyPrice = float(quotes.get("lp"))  - float(EntryDiffPrice)
+#     initialBuyPrice = 0
+#     if debugOn : print(f"Quotes={quotes}, initialBuyPrice= {initialBuyPrice}")
+# #sys.exit()
+# # Initialize order parameters
+# buyOrderParams = {
+#     "buy_or_sell": "B",
+#     "product_type": "C",
+#     "exchange": exch,
+#     "tradingsymbol": StocksName,
+#     'quantity': lotSize,
+#     'discloseqty': 0,
+#     "price_type": price_type,
+#     'price': initialBuyPrice,
+#     'retention': 'DAY',
+#     'remarks': 'By Rajesh',
+# }
+
+# sellOrderParams = {
+#     "buy_or_sell": "S",
+#     "product_type": "C",
+#     "exchange": exch,
+#     "tradingsymbol": StocksName,
+#     'quantity': lotSize,
+#     'discloseqty': 0,
+#     "price_type": "MKT",
+#     'price': 0,
+#     'retention': 'DAY',
+#     'remarks': 'By Rajesh',
+# }
+
+# # Initial cash check
+# initialLimit= api.get_limits()
+# if debugOn : print(f'initialLimit={initialLimit}')
+# time.sleep(0.2)
+# initialCash = float(initialLimit['cash'])
+# if initialCash is None: initialCash = 0
+# print("Initial available Cash =", initialCash)
+
+# start_time = datetime.now()
+# EndTime = start_time + timedelta(minutes=duration)
+# print("This Algo will run till :", EndTime)
+# netPurchasedQty = 0
+# LppArray = []    # lastPurchasedPrice
+# # Place order using the parameters
+# ###################    check any existing position available #######################
+# position = api.get_positions()
+# if debugOn : print(f'position={position}')
+# time.sleep(0.2)
+# if position is not None:
+#     for entry in position:
+#         if entry['tsym'] == StocksName:
+#             daybuyamt = entry['lp']
+#             netPurchasedQty = entry['netqty']
+#             #if int(netPurchasedQty) > 0 : LppArray.append(daybuyamt)
+#             #if int(netPurchasedQty) > 0:
+#                 #for _ in range(int(netPurchasedQty)):
+#                     #LppArray.append(daybuyamt)
+
+#             print(f'Existing position: stock name= {StocksName} , purchased at {daybuyamt}, netPurchasedQty = {netPurchasedQty}')
+#             #print(f"Existing position: tsym={position[0]['tsym']}, pp={position[0]['pp']}, daybuyqty={position[0]['daybuyqty']}, daysellqty={position[0]['daysellqty']}, daybuyamt={position[0]['daybuyamt']}, daybuyavgprc={position[0]['daybuyavgprc']}, daysellamt={position[0]['daysellamt']}, daysellavgprc={position[0]['daysellavgprc']}, cfbuyqty={position[0]['cfbuyqty']}, cfsellqty={position[0]['cfsellqty']}, dayavgprc={position[0]['dayavgprc']}, netqty={position[0]['netqty']}, netavgprc={position[0]['netavgprc']}, netupldprc={position[0]['netupldprc']}, lp={position[0]['lp']}, bep={position[0]['bep']}, totbuyamt={position[0]['totbuyamt']}, totsellamt={position[0]['totsellamt']}, totbuyavgprc={position[0]['totbuyavgprc']}")
+#             nextBuyPrice = float(daybuyamt) - float(EntryDiffPrice)
+#             break
+
+# ###################    if no existing position available then buy at limit price #######################
+# current_time = datetime.now()
+# print(f"current_time={current_time} , closing_time_minus_30_min = {closing_time_minus_30_min} ")
+# if float(netPurchasedQty)< 1 and current_time < closing_time_minus_30_min :
+#     orderStatus = api.place_order(**buyOrderParams)
+#     if debugOn : print(f'orderStatus={orderStatus}')
+#     time.sleep(0.2)
+#     orderNo = orderStatus["norenordno"]
+#     singleOrderStatus = api.single_order_history(orderNo)
+#     print("")
+#     if debugOn : print("singleOrderStatus",singleOrderStatus)
+#     #print("Initial Purchased order placed : last Purchased Price:", singleOrderStatus[0]["avgprc"], "orderStatus =",singleOrderStatus[0]["status"], " orderNo =", orderNo)
+#     #print("")
+#     while (singleOrderStatus[0]["status"] == 'OPEN'):
+#         if keyboard.is_pressed('esc'):
+#             print("Escape key pressed. Exiting loop.")
+#             sys.exit()
+#             #break  # Exit the loop 1
+#         time.sleep(0.5)
+#         print(f"waiting for the execution of the first Buy order no {orderNo}")
+#         singleOrderStatus = api.single_order_history(orderNo)
+#         if debugOn : print(f'singleOrderStatus={singleOrderStatus}')
+#     if (singleOrderStatus[0]["status"] == 'COMPLETE'):
+#         LppArray.append(singleOrderStatus[0]["avgprc"])
+#         if float(singleOrderStatus[0]["avgprc"]) > 0 :
+#             nextBuyPrice = float(singleOrderStatus[0]["avgprc"]) - float(EntryDiffPrice)
+#         else:
+#             nextBuyPrice = float(nextBuyPrice) - float(EntryDiffPrice)
+#         print(f"purchase completed, next Buy Price = {nextBuyPrice}")
+#     else:
+#         if (singleOrderStatus[0]["status"] == 'REJECTED'):
+#             print(f"order rejected")
+#             sys.exit()
+# else:
+#     order_book = api.get_order_book()
+#     if debugOn : print(f'order_book={order_book}')
+#     time.sleep(0.2)
+#     #print("order_book=", order_book)
+#     if order_book is not None:
+#         for item in reversed(order_book):  # Iterating over order_book in reverse order
+#             if item.get('tsym') == StocksName and item.get('status') == 'COMPLETE' :
+#                 trantype = item.get('trantype')
+#                 avgprc = item.get('avgprc')
+
+#                 if trantype ==  'B' : 
+#                     LppArray.append(avgprc)
+#                 if trantype ==  'S' : 
+#                     curIndex = len(LppArray) - 1
+#                     if curIndex >= 0 : 
+#                         LppArray.pop(curIndex)
+
+
+# ###################   if no open position then wait till order getting executed  #######################
+# if len(LppArray) < 1:
+#     while 1:
+#         if keyboard.is_pressed('esc'):
+#             print("Escape key pressed. Exiting loop.")
+#             break  # Exit the loop 2
+#         position = api.get_positions()
+#         if debugOn : print(f'position={position}')
+#         time.sleep(0.2)
+#         netPurchasedQtyInPos = 0;
+#         if position is not None:
+#             for entry in position:
+#                 if entry['tsym'] == StocksName:
+#                     print("entry=",entry)
+#                     print("**********************")
+#                     daybuyamt = entry['daybuyavgprc']
+#                     netPurchasedQtyInPos = entry['netqty']
+#                     #if int(netPurchasedQty) > 0 : LppArray.append(daybuyamt)
+#                     if int(netPurchasedQtyInPos) > 0:
+#                         for _ in range(int(netPurchasedQtyInPos)):
+#                             LppArray.append(daybuyamt)
+#                             break;
+#                     print(f'in position: stock name= {StocksName} , purchased at {daybuyamt}, netPurchasedQty = {netPurchasedQtyInPos}')
+#                     #print(f"Existing position: tsym={position[0]['tsym']}, pp={position[0]['pp']}, daybuyqty={position[0]['daybuyqty']}, daysellqty={position[0]['daysellqty']}, daybuyamt={position[0]['daybuyamt']}, daybuyavgprc={position[0]['daybuyavgprc']}, daysellamt={position[0]['daysellamt']}, daysellavgprc={position[0]['daysellavgprc']}, cfbuyqty={position[0]['cfbuyqty']}, cfsellqty={position[0]['cfsellqty']}, dayavgprc={position[0]['dayavgprc']}, netqty={position[0]['netqty']}, netavgprc={position[0]['netavgprc']}, netupldprc={position[0]['netupldprc']}, lp={position[0]['lp']}, bep={position[0]['bep']}, totbuyamt={position[0]['totbuyamt']}, totsellamt={position[0]['totsellamt']}, totbuyavgprc={position[0]['totbuyavgprc']}")
+#                     break
+#         if int(netPurchasedQtyInPos) > 0 : break;
+
+
+# #===================   start Algo trade =====================
+# #----------------- check current position -------------
+# lastSoldPrice = 0
+# while 1:
+#     if keyboard.is_pressed('esc'):
+#         print("Escape key pressed. Exiting loop.")
+#         break  # Exit the loop
+#     position = api.get_positions()
+#     if debugOn : print(f'position={position}')
+#     time.sleep(0.2)
+#     #if LppArray is not None:
+#         #print("LppArray=", LppArray)
+#     if position is not None:
+#         results=[]
+#         for entry in position:
+#             if entry['tsym'] == StocksName:
+#                 daybuyamt = entry['daybuyavgprc']
+#                 netPurchasedQty = entry['netqty']
+#                 opensellqty =  entry['opensellqty']
+#                 #print(f'Position for {StocksName} is: daybuyAmt= {daybuyamt}, netPurchasedQty = {netPurchasedQty}, opensellqty= {opensellqty},LP= {entry['lp']}')
+#                 break
+#        # else:
+#             #print(f'Tsym {StocksName} not found in the position list.')
+
+#     # Fetch LTP data
+#     quotes = api.get_quotes(exch, StocksName)
+#     if debugOn : print(f'quotes={quotes}')
+#     time.sleep(1)
+#     ltp = quotes.get("lp")
+#     if ltp is not None:
+#         if len(LppArray) > 0:
+#             curIndex = int(float(netPurchasedQty) / float(lotSize)) - 1
+#             if curIndex < 0 : curIndex = 0
+#             if curIndex >= len(LppArray) : curIndex = 0
+#             # print(f'curIndex= {curIndex}, len of LppArray = {len(LppArray)} , netPurchasedQty = {netPurchasedQty},lotSize={lotSize}')
+#             tp = round(float(LppArray[curIndex]) + float(targetPriceDiff), 2)
+#             print(f'Position for {StocksName}: day Avg Pur Price = {daybuyamt}, net Qty = {netPurchasedQty}, next Buy Price= {nextBuyPrice}, LppArraySize = {len(LppArray)}, curIndex= {curIndex}, LPP = {LppArray[curIndex]} ,TP = {tp}, LTP ={ltp} ')
+           
+#             if curIndex < len(LppArray) and float(ltp) < float(LppArray[curIndex]) - float(StopLossInRs):
+#                 slp = float(LppArray[curIndex]) - float(StopLossInRs)
+#                 position = api.get_positions()
+#                 time.sleep(0.2)
+#                 if position is not None:
+#                     results=[]
+#                     for entry in position:
+#                         if entry['tsym'] == StocksName:
+#                             daybuyamt = entry['daybuyavgprc']
+#                             netPurchasedQty = entry['netqty']
+#                             opensellqty =  entry['opensellqty']
+#                             #if debugOn : print(f'Position for {StocksName} is: daybuyAmt= {daybuyamt}, netPurchasedQty = {netPurchasedQty}, opensellqty= {opensellqty},LP= {entry['lp']}')
+#                             break
+#                 sellOrderParams["quantity"] = netPurchasedQty
+#                 orderStatus = api.place_order(**sellOrderParams)
+#                 if debugOn : print(f'orderStatus={orderStatus}')
+#                 time.sleep(0.2)
+#                 orderNo = orderStatus["norenordno"]
+#                 singleOrderStatus = api.single_order_history(orderNo)
+#                 if debugOn : print(f'singleOrderStatus={singleOrderStatus}')
+#                 while (singleOrderStatus[0]["status"] == 'OPEN'):
+#                     if keyboard.is_pressed('esc'):
+#                         print("Escape key pressed. Exiting loop.")
+#                         break  # Exit the loop
+#                     time.sleep(0.5)
+#                     print(f"Waiting to have SL sell order number {orderNo} executed...")
+#                     singleOrderStatus = api.single_order_history(orderNo)
+#                     if debugOn : print(f'singleOrderStatus={singleOrderStatus}')
+#                 print(f'Stop loss hit : ltp={ltp}, qty={netPurchasedQty}, buyAmt={LppArray[curIndex]},slp = {slp}, sl={StopLossInRs} qty sold at market price')
+#                 buyFlag = True
+#                 LppArray = []
+#                 nextBuyPrice = float(ltp) - EntryDiffPrice
+#                 break
+
+#             if curIndex < len(LppArray) and float(ltp) > (float(LppArray[curIndex]) + float(targetPriceDiff)) and (float(netPurchasedQty) > 0):  # book profit
+#                 tp = float(LppArray[curIndex]) + float(targetPriceDiff)
+#                 tp_order = float(ltp) - 0.05
+#                 sellOrderParamsLMT = {
+#                     "buy_or_sell": "S",
+#                     "product_type": "C",
+#                     "exchange": exch,
+#                     "tradingsymbol": StocksName,
+#                     'quantity': lotSize,
+#                     'discloseqty': 0,
+#                     "price_type": "LMT",
+#                     'price': tp_order,
+#                     'retention': 'DAY',
+#                     'remarks': 'By Rajesh LMT',
+#                 }
+#                 orderStatus = api.place_order(**sellOrderParams)
+#                 if debugOn : print(f'sell orderStatus={orderStatus}')
+#                 time.sleep(0.2)
+#                 orderNo = orderStatus["norenordno"]
+#                 singleOrderStatus = api.single_order_history(orderNo)
+#                 if debugOn : print(f'sell singleOrderStatus={singleOrderStatus}')
+#                 while (singleOrderStatus[0]["status"] == 'OPEN'):
+#                     if keyboard.is_pressed('esc'):
+#                         print("Escape key pressed. Exiting loop.")
+#                         break  # Exit the loop
+#                     time.sleep(0.5)
+#                     print(f"Profit booking: Waiting to have Sell order number {orderNo} executed...")
+#                     singleOrderStatus = api.single_order_history(orderNo)
+#                     if debugOn : print(f'sell singleOrderStatus={singleOrderStatus}')
+#                 sizeOfPArray = len(LppArray)
+#                 lastSoldPrice = singleOrderStatus[0]["avgprc"]
+#                 print("Profit booked : ", " 1 qty sold at =", lastSoldPrice, " market price, buyprice=", LppArray[curIndex], "targetPriceDiff=",
+#                   targetPriceDiff, "TP:",tp,", sizeOfPArray=",sizeOfPArray)
+#                 buyFlag = True
+#                 if len(LppArray) > (int(netPurchasedQty) - 1):
+#                     LppArray.pop(int(netPurchasedQty) - 1)
+#                 nextBuyPrice = float(lastSoldPrice) - float(EntryDiffPrice)
+#             current_time = datetime.now()
+#             if current_time < closing_time_minus_30_min :
+#                 if ((buyFlag) and  curIndex < len(LppArray) and (float(ltp) < (float(nextBuyPrice))) and (float(netPurchasedQty) <= float(MaxOpenPosition))):
+#                     orderStatus = api.place_order(**buyOrderParams)
+#                     if debugOn : print(f'buy orderStatus={orderStatus}')
+#                     time.sleep(0.2)
+#                     orderNo = orderStatus["norenordno"]
+#                     singleOrderStatus = api.single_order_history(orderNo)
+#                     if debugOn : print(f'buy singleOrderStatus={singleOrderStatus}')
+#                 # LppArray = singleOrderStatus[0]["prc"]
+#                     while (singleOrderStatus[0]["status"] == 'OPEN'):
+#                         if keyboard.is_pressed('esc'):
+#                             print("Escape key pressed. Exiting loop.")
+#                             break  # Exit the loop
+#                         time.sleep(0.5)
+#                         print(f"Buy Order: Waiting to have order number {orderNo} executed...")
+#                         singleOrderStatus = api.single_order_history(orderNo)
+#                         if debugOn : print(f'buy singleOrderStatus={singleOrderStatus}')
+#                     #print("Purchased order placed :", netPurchasedQty, "at ", ltp, " last buyamt:", singleOrderStatus[0]["avgprc"], "orderStatus =", singleOrderStatus[0]["status"], " orderNo =", orderNo)
+#                     if (singleOrderStatus[0]["status"] == 'COMPLETE'):
+#                         LppArray.append(singleOrderStatus[0]["avgprc"])
+#                         nextBuyPrice = float(nextBuyPrice) - float(EntryDiffPrice)
+#                         print(f"purchase completed, next Buy Price = {nextBuyPrice}")
+#                     if(singleOrderStatus[0]["status"] == 'REJECTED'):
+#                         buyFlag = False
+#         else:
+#             current_time = datetime.now()
+#             if current_time < closing_time_minus_30_min :
+#                 print(f'waiting to buy : ltp={ltp}, Next buyPrice : {nextBuyPrice}')
+#                 if float(ltp) < float(nextBuyPrice): #float(lastSoldPrice) - float(StopLossInRs):
+#                     orderStatus = api.place_order(**buyOrderParams)
+#                     time.sleep(0.2)
+#                     orderNo = orderStatus["norenordno"]
+#                     singleOrderStatus = api.single_order_history(orderNo)
+                    
+#                     #print("singleOrderStatus:", singleOrderStatus)
+#                     #print("Purchased order placed :", netPurchasedQty, "at ", ltp, " last buyamt:", singleOrderStatus[0]["avgprc"], "orderStatus =", singleOrderStatus[0]["status"], " orderNo =", orderNo)
+                
+#                     while (singleOrderStatus[0]["status"] == 'OPEN'):
+#                         if keyboard.is_pressed('esc'):
+#                             print("Escape key pressed. Exiting loop.")
+#                             break  # Exit the loop
+#                         time.sleep(0.5)
+#                         print(f"Buy Order(2nd purchase): Waiting to have order number {orderNo} executed...")
+#                         singleOrderStatus = api.single_order_history(orderNo)
+#                     if (singleOrderStatus[0]["status"] == 'COMPLETE'):
+#                         LppArray.append(singleOrderStatus[0]["avgprc"])
+#                         nextBuyPrice = float(singleOrderStatus[0]["avgprc"]) - float(EntryDiffPrice)
+#                         print(f"2nd purchase completed, next Buy Price = {nextBuyPrice}")
+#                     if(singleOrderStatus[0]["status"] == 'REJECTED'):
+#                         buyFlag = False
+#     if keyboard.is_pressed('esc'):
+#         print("Escape key pressed. Exiting loop.")
+#         break  # Exit the loop
+   
+#     # check end time
+#     current_time = datetime.now()
+#     if current_time > EndTime or current_time > closing_time_minus_1_min:
+#         timespent = current_time - start_time
+#         print("timespent:", timespent, "start time:", start_time, "current_time:", current_time, "closing_time_minus_1_min:", closing_time_minus_1_min, "closing_time:", closing_time_combined )
+#         # Place sell order for all QTY
+#         #position = api.get_positions()
+#         #time.sleep(0.2)
+
+#         if float(netPurchasedQty) > 0 and current_time < closing_time_combined :
+#             sellOrderParams["quantity"] = netPurchasedQty
+#             sellOrderResponse = api.place_order(**sellOrderParams)
+#             time.sleep(0.2)
+#             orderNo = sellOrderResponse["norenordno"]
+#             singleOrderStatus = api.single_order_history(orderNo)
+#             while (singleOrderStatus[0]["status"] == 'OPEN'):
+#                     time.sleep(0.5)
+#                     print(f"Buy Order: Waiting to have order number {orderNo} executed...")
+#                     singleOrderStatus = api.single_order_history(orderNo)
+#             LppArray = []
+#             if sellOrderResponse is not None :
+#                 order_id = sellOrderResponse['norenordno']
+#                 print("End time reached , Sell order placed successfully. Order ID:", order_id)
+#             else:
+#                 print("End time reached , Failed to place sell order.")
+#         else:
+#             print("End time reached , either No quantity to sell or Market closed .")
+#         break
+
+
+#     # End of loop
+# time.sleep(1)
+# funds = api.get_limits()
+# balance_cash = float(funds['cash'])
+
+# # Calculate profit
+# profit = balance_cash - initialCash
+# print("initialCash=", initialCash, "Balance Cash =", balance_cash, "Total profit =", profit)
+
+# time.sleep(1)
+# def logout(user_id):
+#     # Perform any necessary cleanup or logging out logic here
+#     ret1 = api.logout()
+#     if debugOn : print(f'logout={ret1}')
+#     #print(ret1)
+#     print(f"User with ID {user_id} has been logged out.")
+
+# try:
+#     time.sleep(0.2)
+#     logout(user)
+#     #print("Logout Successful")
+# except Exception as e:
+#     print("Logout failed: {}".format(e.message))
+
+# sys.exit()
+
+
+######################################
+# import sys
+# import time
+# import json
+# import logging
+# from datetime import datetime, timedelta
+# from NorenRestApiPy.NorenApi import NorenApi
+# import pyotp  # <-- TOTP support
+
+# # Setup logging
+# logging.basicConfig(level=logging.INFO)
+# logging.getLogger('NorenRestApiPy.NorenApi').setLevel(logging.WARNING)
+# logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+
+# # Custom API Wrapper
+# class ShoonyaApiPy(NorenApi):
+#     def __init__(self):
+#         super().__init__(
+#             host='https://api.shoonya.com/NorenWClientTP/',
+#             websocket='wss://api.shoonya.com/NorenWSTP/'
+#         )
+#         global api
+#         api = self
+
+# # Logging helper
+# def log_json(tag, data):
+#     print(json.dumps({
+#         "tag": tag,
+#         "timestamp": datetime.now().isoformat(),
+#         "data": data
+#     }, indent=2))
+
+# # Strategy Runner
+# def run_scalping_strategy(params):
+#     api = ShoonyaApiPy()
+
+#     # Destructure params
+#     token = params["token"]  # This is the TOTP key, not OTP
+#     user = params["user"]
+#     password = params["password"]
+#     vc = params["vc"]
+#     app_key = params["app_key"]
+#     imei = params["imei"]
+#     exch = params["exch"]
+#     stock_name = params["stock_name"]
+#     price_type = params["price_type"]
+#     initialBuyPrice = float(params["initial_buy_price"])
+#     targetPriceDiff = float(params["target_price_diff"])
+#     entryDiffPrice = float(params["entry_diff_price"])
+#     lotSize = int(params["lot_size"])
+#     maxOpenPosition = int(params["max_open_position"])
+#     duration = int(params["duration"])
+#     market_closing_time = params["market_closing_time"]
+#     debugOn = params["debug_on"] == 'True'
+
+#     # Convert TOTP key to current OTP
+#     try:
+#         otp = pyotp.TOTP(token).now()
+#     except Exception as e:
+#         log_json("OTP Error", {"error": str(e)})
+#         return
+
+#     # Debug login inputs
+#     log_json("Login Inputs", {
+#         "user": user,
+#         "otp": otp,
+#         "vc": vc,
+#         "app_key_length": len(app_key),
+#         "imei": imei
+#     })
+
+#     # Try login
+#     loginStatus = None
+#     try:
+#         loginStatus = api.login(
+#             userid=user,
+#             password=password,
+#             twoFA=otp,
+#             vendor_code=vc,
+#             api_secret=app_key,
+#             imei=imei
+#         )
+#     except Exception as e:
+#         log_json("Login Exception", {"error": str(e)})
+
+#     log_json("Raw Login Response", loginStatus)
+
+#     if loginStatus is None:
+#         log_json("Login Failed", {"reason": "Login returned None. Possible token or session error."})
+#         return
+#     elif loginStatus.get("stat") != "Ok":
+#         log_json("Login Failed", loginStatus)
+#         return
+
+#     log_json("Login Successful", loginStatus)
+
+#     # Market Time Setup
+#     current_time = datetime.now()
+#     closing_time = datetime.strptime(market_closing_time, "%H:%M:%S")
+#     closing_time_combined = datetime.combine(current_time.date(), closing_time.time())
+#     closing_time_minus_30_min = closing_time_combined - timedelta(minutes=30)
+
+#     # Optional: Fetch Market Data
+#     try:
+#         quotes = api.get_quotes(exchange=exch, token='2029')  # test token
+#         limits = api.get_limits()
+#         log_json("Market Quote", quotes)
+#         log_json("Cash Limit", limits)
+#     except Exception as e:
+#         log_json("API Error", {"error": str(e)})
+
+#     # Strategy Info
+#     stopLossInRs = entryDiffPrice * (maxOpenPosition + 1)
+#     runtime_info = {
+#         "initialBuyPrice": initialBuyPrice,
+#         "stopLoss": stopLossInRs,
+#         "strategyEndsAt": str(current_time + timedelta(seconds=duration)),
+#         "closingTime": str(closing_time_combined),
+#         "closingTimeMinus30Min": str(closing_time_minus_30_min)
+#     }
+#     log_json("Strategy Runtime Info", runtime_info)
+
+#     # Place Dummy Order with Additional Logging
+#     try:
+#         # Log the parameters before placing the order
+#         log_json("Placing Order Details", {
+#             "buy_or_sell": 'B',
+#             "product_type": 'C',
+#             "exchange": exch,
+#             "tradingsymbol": stock_name,
+#             "quantity": 1,
+#             "discloseqty": 0,
+#             "price_type": price_type,
+#             "price": 0.0,
+#             "trigger_price": None,
+#             "retention": 'DAY',
+#             "remarks": 'By MERN Backend'
+#         })
+
+#         # Placing the order
+#         order = api.place_order(
+#             buy_or_sell='B',
+#             product_type='C',
+#             exchange=exch,
+#             tradingsymbol=stock_name,
+#             quantity=1,
+#             discloseqty=0,
+#             price_type=price_type,
+#             price=0.0,
+#             trigger_price=None,
+#             retention='DAY',
+#             remarks='By MERN Backend'
+#         )
+        
+#         # Log the order response
+#         log_json("Order Placed", order)
+
+#         if order and order.get('stat') == 'Ok':
+#             time.sleep(1)
+#             hist = api.single_order_history(order['norenordno'])
+#             log_json("Order History", hist)
+#         else:
+#             log_json("Order Failed", {
+#                 "reason": "API did not return 'Ok' status",
+#                 "response": order
+#             })
+#     except Exception as e:
+#         log_json("Order Error", {"error": str(e)})
+
+# # Main Entrypoint
+# if __name__ == "__main__":
+#     try:
+#         input_data = sys.stdin.read()
+#         params = json.loads(input_data)
+#         log_json("Received Params", params)
+#         run_scalping_strategy(params)
+#     except Exception as e:
+#         log_json("Startup Error", {"error": str(e)})
+
+#############################################################
+
+import sys
+import time
+import json
+import logging
+from datetime import datetime, timedelta
+from NorenRestApiPy.NorenApi import NorenApi
+import pyotp  # <-- TOTP support
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('NorenRestApiPy.NorenApi').setLevel(logging.WARNING)
+logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+
+# Custom API Wrapper
+class ShoonyaApiPy(NorenApi):
+    def __init__(self):
+        super().__init__(
+            host='https://api.shoonya.com/NorenWClientTP/',
+            websocket='wss://api.shoonya.com/NorenWSTP/'
+        )
+        global api
+        api = self
+
+# Logging helper
+def log_json(tag, data):
+    # Convert datetime objects to strings
+    def default_converter(o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+
+    print(json.dumps({
+        "tag": tag,
+        "timestamp": datetime.now().isoformat(),
+        "data": data
+    }, indent=2, default=default_converter))
+
+# Strategy Runner
+def run_scalping_strategy(params):
+    api = ShoonyaApiPy()
+
+    # Destructure params
+    token = params["token"]  # This is the TOTP key, not OTP
+    user = params["user"]
+    password = params["password"]
+    vc = params["vc"]
+    app_key = params["app_key"]
+    imei = params["imei"]
+    exch = params["exch"]
+    stock_name = params["stock_name"]
+    price_type = params["price_type"]
+    initialBuyPrice = float(params["initial_buy_price"])
+    targetPriceDiff = float(params["target_price_diff"])
+    entryDiffPrice = float(params["entry_diff_price"])
+    lotSize = int(params["lot_size"])
+    maxOpenPosition = int(params["max_open_position"])
+    duration = int(params["duration"])
+    market_closing_time = params["market_closing_time"]
+    debugOn = params["debug_on"] == 'True'
+
+    # Convert TOTP key to current OTP
+    try:
+        otp = pyotp.TOTP(token).now()
+    except Exception as e:
+        log_json("OTP Error", {"error": str(e)})
+        return
+
+    # Debug login inputs
+    log_json("Login Inputs", {
+        "user": user,
+        "otp": otp,
+        "vc": vc,
+        "app_key_length": len(app_key),
+        "imei": imei
+    })
+
+    # Try login
+    loginStatus = None
+    try:
+        loginStatus = api.login(
+            userid=user,
+            password=password,
+            twoFA=otp,
+            vendor_code=vc,
+            api_secret=app_key,
+            imei=imei
+        )
+    except Exception as e:
+        log_json("Login Exception", {"error": str(e)})
+
+    log_json("Raw Login Response", loginStatus)
+
+    if loginStatus is None:
+        log_json("Login Failed", {"reason": "Login returned None. Possible token or session error."})
+        return
+    elif loginStatus.get("stat") != "Ok":
+        log_json("Login Failed", loginStatus)
+        return
+
+    log_json("Login Successful", loginStatus)
+
+    # Market Time Setup
+    current_time = datetime.now()
+    closing_time = datetime.strptime(market_closing_time, "%H:%M:%S")
+    closing_time_combined = datetime.combine(current_time.date(), closing_time.time())
+    closing_time_minus_30_min = closing_time_combined - timedelta(minutes=30)
+    closing_time_minus_1_min = closing_time_combined - timedelta(minutes=1)
+
+    # Log the calculated times for debugging
+    log_json("Market Times", {
+        "closing_time_combined": str(closing_time_combined),
+        "closing_time_minus_30_min": str(closing_time_minus_30_min),
+        "closing_time_minus_1_min": str(closing_time_minus_1_min)  # Log this variable
+    })
+
+    # Optional: Fetch Market Data
+    try:
+        quotes = api.get_quotes(exchange=exch, token=stock_name)  # Use the actual stock token
+        limits = api.get_limits()
+        log_json("Market Quote", quotes)
+        log_json("Cash Limit", limits)
+    except Exception as e:
+        log_json("API Error", {"error": str(e)})
+
+    # Strategy Info
+    stopLossInRs = entryDiffPrice * (maxOpenPosition + 1)
+    runtime_info = {
+        "initialBuyPrice": initialBuyPrice,
+        "stopLoss": stopLossInRs,
+        "strategyEndsAt": str(current_time + timedelta(seconds=duration)),
+        "closingTime": str(closing_time_combined),
+        "closingTimeMinus30Min": str(closing_time_minus_30_min)
+    }
+    log_json("Strategy Runtime Info", runtime_info)
+
+    # Initialize order parameters
+    buyOrderParams = {
+        "buy_or_sell": "B",
+        "product_type": "C",
+        "exchange": exch,
+        "tradingsymbol": stock_name,
+        'quantity': lotSize,
+        'discloseqty': 0,
+        "price_type": price_type,
+        'price': initialBuyPrice,
+        'retention': 'DAY',
+        'remarks': 'By MERN Backend',
+    }
+
+    sellOrderParams = {
+        "buy_or_sell": "S",
+        "product_type": "C",
+        "exchange": exch,
+        "tradingsymbol": stock_name,
+        'quantity': lotSize,
+        'discloseqty': 0,
+        "price_type": "MKT",
+        'price': 0,
+        'retention': 'DAY',
+        'remarks': 'By MERN Backend',
+    }
+
+    # Initial cash check
+    initialLimit = api.get_limits()
+    log_json("Initial Limits", initialLimit)
+    initialCash = float(initialLimit['cash'])
+    log_json("Initial Cash", initialCash)
+
+    start_time = datetime.now()
+    EndTime = start_time + timedelta(minutes=duration)
+    log_json("Strategy End Time", EndTime)
+
+    netPurchasedQty = 0
+    LppArray = []  # lastPurchasedPrice
+
+    # Check any existing position available
+    position = api.get_positions()
+    log_json("Initial Positions", position)
+
+    if position is not None:
+        for entry in position:
+            if entry['tsym'] == stock_name:
+                daybuyamt = entry['lp']
+                netPurchasedQty = entry['netqty']
+                nextBuyPrice = float(daybuyamt) - float(entryDiffPrice)
+                log_json("Existing Position", {
+                    "stock_name": stock_name,
+                    "purchased_at": daybuyamt,
+                    "netPurchasedQty": netPurchasedQty,
+                    "nextBuyPrice": nextBuyPrice
+                })
+                break
+
+    # If no existing position available then buy at limit price
+    current_time = datetime.now()
+    if float(netPurchasedQty) < 1 and current_time < closing_time_minus_30_min:
+        orderStatus = api.place_order(**buyOrderParams)
+        log_json("Initial Buy Order Status", orderStatus)
+
+        if orderStatus is None:
+            log_json("Error", "Order placement returned None")
+            return
+
+        orderNo = orderStatus.get("norenordno")
+        if orderNo is None:
+            log_json("Error", "Order number is None in order status")
+            return
+
+        singleOrderStatus = api.single_order_history(orderNo)
+        log_json("Initial Buy Order History", singleOrderStatus)
+
+        while singleOrderStatus and singleOrderStatus[0]["status"] == 'OPEN':
+            time.sleep(0.5)
+            log_json("Waiting for Initial Buy Order Execution", {"orderNo": orderNo})
+            singleOrderStatus = api.single_order_history(orderNo)
+
+        if singleOrderStatus and singleOrderStatus[0]["status"] == 'COMPLETE':
+            LppArray.append(singleOrderStatus[0]["avgprc"])
+            nextBuyPrice = float(singleOrderStatus[0]["avgprc"]) - float(entryDiffPrice)
+            log_json("Initial Buy Completed", {"nextBuyPrice": nextBuyPrice})
+        elif singleOrderStatus and singleOrderStatus[0]["status"] == 'REJECTED':
+            log_json("Initial Buy Order Rejected", singleOrderStatus)
+            return
+    else:
+        order_book = api.get_order_book()
+        log_json("Order Book", order_book)
+        if order_book is not None:
+            for item in reversed(order_book):
+                if item.get('tsym') == stock_name and item.get('status') == 'COMPLETE':
+                    trantype = item.get('trantype')
+                    avgprc = item.get('avgprc')
+                    if trantype == 'B':
+                        LppArray.append(avgprc)
+                    if trantype == 'S':
+                        if LppArray:
+                            LppArray.pop()
+
+    # If no open position then wait till order getting executed
+    if not LppArray:
+        while True:
+            position = api.get_positions()
+            log_json("Waiting for Position", position)
+            time.sleep(0.2)
+            netPurchasedQtyInPos = 0
+            if position is not None:
+                for entry in position:
+                    if entry['tsym'] == stock_name:
+                        daybuyamt = entry['daybuyavgprc']
+                        netPurchasedQtyInPos = entry['netqty']
+                        if int(netPurchasedQtyInPos) > 0:
+                            for _ in range(int(netPurchasedQtyInPos)):
+                                LppArray.append(daybuyamt)
+                            log_json("Position Updated", {
+                                "stock_name": stock_name,
+                                "purchased_at": daybuyamt,
+                                "netPurchasedQty": netPurchasedQtyInPos
+                            })
+                            break
+            if netPurchasedQtyInPos > 0:
+                break
+
+    # Start Algo trade
+    lastSoldPrice = 0
+    while True:
+        position = api.get_positions()
+        log_json("Current Position", position)
+        time.sleep(0.2)
+
+        if position is not None:
+            for entry in position:
+                if entry['tsym'] == stock_name:
+                    daybuyamt = entry['daybuyavgprc']
+                    netPurchasedQty = entry['netqty']
+                    break
+
+        # Fetch LTP data
+        quotes = api.get_quotes(exch, stock_name)
+        log_json("Quotes", quotes)
+        time.sleep(1)
+        ltp = quotes.get("lp") if quotes else None
+
+        if ltp is not None:
+            if LppArray:
+                curIndex = int(float(netPurchasedQty) / float(lotSize)) - 1
+                if curIndex < 0:
+                    curIndex = 0
+                if curIndex >= len(LppArray):
+                    curIndex = 0
+
+                tp = round(float(LppArray[curIndex]) + float(targetPriceDiff), 2)
+                log_json("Position Info", {
+                    "dayAvgPurPrice": daybuyamt,
+                    "netQty": netPurchasedQty,
+                    "nextBuyPrice": nextBuyPrice,
+                    "LppArraySize": len(LppArray),
+                    "curIndex": curIndex,
+                    "LPP": LppArray[curIndex],
+                    "TP": tp,
+                    "LTP": ltp
+                })
+
+                if curIndex < len(LppArray) and float(ltp) < float(LppArray[curIndex]) - float(stopLossInRs):
+                    slp = float(LppArray[curIndex]) - float(stopLossInRs)
+                    position = api.get_positions()
+                    time.sleep(0.2)
+                    if position is not None:
+                        for entry in position:
+                            if entry['tsym'] == stock_name:
+                                daybuyamt = entry['daybuyavgprc']
+                                netPurchasedQty = entry['netqty']
+                                break
+                    sellOrderParams["quantity"] = netPurchasedQty
+                    orderStatus = api.place_order(**sellOrderParams)
+                    log_json("Stop Loss Sell Order Status", orderStatus)
+
+                    if orderStatus is None:
+                        log_json("Error", "Order placement returned None")
+                        return
+
+                    orderNo = orderStatus.get("norenordno")
+                    if orderNo is None:
+                        log_json("Error", "Order number is None in order status")
+                        return
+
+                    singleOrderStatus = api.single_order_history(orderNo)
+                    log_json("Stop Loss Sell Order History", singleOrderStatus)
+
+                    while singleOrderStatus and singleOrderStatus[0]["status"] == 'OPEN':
+                        time.sleep(0.5)
+                        log_json("Waiting for Stop Loss Sell Order Execution", {"orderNo": orderNo})
+                        singleOrderStatus = api.single_order_history(orderNo)
+
+                    log_json("Stop Loss Hit", {
+                        "ltp": ltp,
+                        "qty": netPurchasedQty,
+                        "buyAmt": LppArray[curIndex],
+                        "slp": slp,
+                        "sl": stopLossInRs
+                    })
+                    LppArray = []
+                    nextBuyPrice = float(ltp) - entryDiffPrice
+                    break
+
+                if curIndex < len(LppArray) and float(ltp) > (float(LppArray[curIndex]) + float(targetPriceDiff)) and (float(netPurchasedQty) > 0):
+                    tp = float(LppArray[curIndex]) + float(targetPriceDiff)
+                    tp_order = float(ltp) - 0.05
+                    sellOrderParamsLMT = {
+                        "buy_or_sell": "S",
+                        "product_type": "C",
+                        "exchange": exch,
+                        "tradingsymbol": stock_name,
+                        'quantity': lotSize,
+                        'discloseqty': 0,
+                        "price_type": "LMT",
+                        'price': tp_order,
+                        'retention': 'DAY',
+                        'remarks': 'By MERN Backend LMT',
+                    }
+                    orderStatus = api.place_order(**sellOrderParams)
+                    log_json("Profit Booking Sell Order Status", orderStatus)
+
+                    if orderStatus is None:
+                        log_json("Error", "Order placement returned None")
+                        return
+
+                    orderNo = orderStatus.get("norenordno")
+                    if orderNo is None:
+                        log_json("Error", "Order number is None in order status")
+                        return
+
+                    singleOrderStatus = api.single_order_history(orderNo)
+                    log_json("Profit Booking Sell Order History", singleOrderStatus)
+
+                    while singleOrderStatus and singleOrderStatus[0]["status"] == 'OPEN':
+                        time.sleep(0.5)
+                        log_json("Waiting for Profit Booking Sell Order Execution", {"orderNo": orderNo})
+                        singleOrderStatus = api.single_order_history(orderNo)
+
+                    sizeOfPArray = len(LppArray)
+                    lastSoldPrice = singleOrderStatus[0]["avgprc"]
+                    log_json("Profit Booked", {
+                        "qtySold": 1,
+                        "soldAt": lastSoldPrice,
+                        "buyPrice": LppArray[curIndex],
+                        "targetPriceDiff": targetPriceDiff,
+                        "TP": tp,
+                        "sizeOfPArray": sizeOfPArray
+                    })
+                    if len(LppArray) > (int(netPurchasedQty) - 1):
+                        LppArray.pop(int(netPurchasedQty) - 1)
+                    nextBuyPrice = float(lastSoldPrice) - float(entryDiffPrice)
+
+                current_time = datetime.now()
+                if current_time < closing_time_minus_30_min:
+                    if float(ltp) < float(nextBuyPrice) and float(netPurchasedQty) <= float(maxOpenPosition):
+                        orderStatus = api.place_order(**buyOrderParams)
+                        log_json("Buy Order Status", orderStatus)
+
+                        if orderStatus is None:
+                            log_json("Error", "Order placement returned None")
+                            return
+
+                        orderNo = orderStatus.get("norenordno")
+                        if orderNo is None:
+                            log_json("Error", "Order number is None in order status")
+                            return
+
+                        singleOrderStatus = api.single_order_history(orderNo)
+                        log_json("Buy Order History", singleOrderStatus)
+
+                        while singleOrderStatus and singleOrderStatus[0]["status"] == 'OPEN':
+                            time.sleep(0.5)
+                            log_json("Waiting for Buy Order Execution", {"orderNo": orderNo})
+                            singleOrderStatus = api.single_order_history(orderNo)
+
+                        if singleOrderStatus and singleOrderStatus[0]["status"] == 'COMPLETE':
+                            LppArray.append(singleOrderStatus[0]["avgprc"])
+                            nextBuyPrice = float(nextBuyPrice) - float(entryDiffPrice)
+                            log_json("Buy Completed", {"nextBuyPrice": nextBuyPrice})
+                        if singleOrderStatus and singleOrderStatus[0]["status"] == 'REJECTED':
+                            log_json("Buy Order Rejected", singleOrderStatus)
+                            return
+        else:
+            current_time = datetime.now()
+            if current_time < closing_time_minus_30_min:
+                log_json("Waiting to Buy", {"ltp": ltp, "nextBuyPrice": nextBuyPrice})
+                if float(ltp) < float(nextBuyPrice):
+                    orderStatus = api.place_order(**buyOrderParams)
+                    log_json("Second Buy Order Status", orderStatus)
+
+                    if orderStatus is None:
+                        log_json("Error", "Order placement returned None")
+                        return
+
+                    orderNo = orderStatus.get("norenordno")
+                    if orderNo is None:
+                        log_json("Error", "Order number is None in order status")
+                        return
+
+                    singleOrderStatus = api.single_order_history(orderNo)
+                    log_json("Second Buy Order History", singleOrderStatus)
+
+                    while singleOrderStatus and singleOrderStatus[0]["status"] == 'OPEN':
+                        time.sleep(0.5)
+                        log_json("Waiting for Second Buy Order Execution", {"orderNo": orderNo})
+                        singleOrderStatus = api.single_order_history(orderNo)
+
+                    if singleOrderStatus and singleOrderStatus[0]["status"] == 'COMPLETE':
+                        LppArray.append(singleOrderStatus[0]["avgprc"])
+                        nextBuyPrice = float(singleOrderStatus[0]["avgprc"]) - float(entryDiffPrice)
+                        log_json("Second Buy Completed", {"nextBuyPrice": nextBuyPrice})
+                    if singleOrderStatus and singleOrderStatus[0]["status"] == 'REJECTED':
+                        log_json("Second Buy Order Rejected", singleOrderStatus)
+                        return
+
+        # Check end time
+        current_time = datetime.now()
+        if current_time > EndTime or current_time > closing_time_minus_1_min:
+            timespent = current_time - start_time
+            log_json("Time Spent", {
+                "timespent": str(timespent),
+                "start_time": start_time,
+                "current_time": current_time,
+                "closing_time_minus_1_min": closing_time_minus_1_min,
+                "closing_time": closing_time_combined
+            })
+
+            if float(netPurchasedQty) > 0 and current_time < closing_time_combined:
+                sellOrderParams["quantity"] = netPurchasedQty
+                sellOrderResponse = api.place_order(**sellOrderParams)
+                log_json("End Time Sell Order Status", sellOrderResponse)
+
+                if sellOrderResponse is None:
+                    log_json("Error", "Order placement returned None")
+                    return
+
+                orderNo = sellOrderResponse.get("norenordno")
+                if orderNo is None:
+                    log_json("Error", "Order number is None in order status")
+                    return
+
+                singleOrderStatus = api.single_order_history(orderNo)
+                log_json("End Time Sell Order History", singleOrderStatus)
+
+                while singleOrderStatus and singleOrderStatus[0]["status"] == 'OPEN':
+                    time.sleep(0.5)
+                    log_json("Waiting for End Time Sell Order Execution", {"orderNo": orderNo})
+                    singleOrderStatus = api.single_order_history(orderNo)
+
+                LppArray = []
+                if sellOrderResponse is not None:
+                    order_id = sellOrderResponse['norenordno']
+                    log_json("End Time Sell Order Placed", {"order_id": order_id})
+                else:
+                    log_json("End Time Sell Order Failed", {})
+            else:
+                log_json("End Time Reached", {"reason": "No quantity to sell or market closed."})
+            break
+
+        time.sleep(1)
+
+    # Calculate profit
+    funds = api.get_limits()
+    balance_cash = float(funds['cash'])
+    profit = balance_cash - initialCash
+    log_json("Trading Session Profit", {
+        "initialCash": initialCash,
+        "balanceCash": balance_cash,
+        "profit": profit
+    })
+
+    # Logout
+    def logout(user_id):
+        ret1 = api.logout()
+        log_json("Logout Response", ret1)
+        log_json("User Logged Out", {"user_id": user_id})
+
+    try:
+        logout(user)
+    except Exception as e:
+        log_json("Logout Error", {"error": str(e)})
+
+# Main Entrypoint
+if __name__ == "__main__":
+    try:
+        input_data = sys.stdin.read()
+        params = json.loads(input_data)
+        log_json("Received Params", params)
+        run_scalping_strategy(params)
+    except Exception as e:
+        log_json("Startup Error", {"error": str(e)})
